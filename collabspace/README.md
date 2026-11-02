@@ -108,7 +108,3 @@ Browser checks were also run by hand-scripting real clicks (journeys across all 
 ## Future work
 
 Real backend and sign-in, cross-device sync, real-time notifications, contact sharing after a match, richer search and recommendations, linking a learning role in a project to the mentor directory, and an analytics view of how many opportunities find a team.
-
-## AI usage disclosure
-
-This project was planned and written with Claude (Anthropic) through Claude Code, working from the two project PDFs. AI tools are allowed for the course but must be disclosed and understood: whoever submits this should read through each module, run `npm test`, and be able to explain the data flow (page, rule function, `store.js`, notification) before presenting it.
