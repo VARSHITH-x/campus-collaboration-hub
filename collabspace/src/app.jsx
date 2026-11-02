@@ -1,7 +1,9 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Nav from './components/nav.jsx'
-import { Modal, Toasts, toast } from './components/ui.jsx'
-import { storage, useRoute, useStorageError } from './store.js'
+import { ErrorBoundary, Modal, Toasts, toast } from './components/ui.jsx'
+import { clearStorageError, storage, useRoute, useStorageError } from './store.js'
+import { expireOpportunities } from './collab.js'
+import { expireStale } from './learning.js'
 import Home from './pages/home.jsx'
 import Projects from './pages/projects.jsx'
 import Learn from './pages/learn.jsx'
@@ -15,6 +17,9 @@ export default function App() {
   const { page } = useRoute()
   const storageError = useStorageError()
   const [confirmReset, setConfirmReset] = useState(false)
+
+  // Old open items quietly expire so they never look active forever.
+  useEffect(() => { expireOpportunities(); expireStale() }, [])
   const Page = pages[page] || Home
 
   const reset = () => {
@@ -26,9 +31,11 @@ export default function App() {
   return (
     <>
       <Nav page={pages[page] ? page : 'home'} />
-      {storageError && <div className="banner">{storageError}</div>}
+      {storageError && <div className="banner" role="alert">{storageError} <button className="link-btn" onClick={clearStorageError}>Dismiss</button></div>}
       <main className="page" key={page}>
-        <Page />
+        <ErrorBoundary resetKey={page} onReset={() => { storage.resetDemoData(); toast('Demo data restored') }}>
+          <Page />
+        </ErrorBoundary>
       </main>
       <footer className="footer">
         <span className="muted">

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { demoUsers } from '../data.js'
-import { go, switchUser, useCurrentUser } from '../store.js'
+import { switchUser, useCollection, useCurrentUser } from '../store.js'
+import { unreadCount } from '../notify.js'
 import { toast } from './ui.jsx'
 
 export const links = [
@@ -51,15 +52,19 @@ function UserMenu() {
 
 export default function Nav({ page }) {
   const [menu, setMenu] = useState(false)
+  const me = useCurrentUser()
+  useCollection('notifications')
+  const unread = unreadCount(me.id)
   return (
     <header className="nav">
       <div className="nav-inner">
         <a className="brand" href="#/home">Collab<span>Space</span></a>
-        <button className="btn ghost burger" onClick={() => setMenu(!menu)} aria-label="Toggle menu">Menu</button>
-        <nav className={`nav-links ${menu ? 'show' : ''}`}>
+        <button className="btn ghost burger" onClick={() => setMenu(!menu)} aria-expanded={menu} aria-controls="main-nav">Menu</button>
+        <nav id="main-nav" aria-label="Main" className={`nav-links ${menu ? 'show' : ''}`}>
           {links.map((l) => (
             <a key={l.page} href={`#/${l.page}`} className={page === l.page ? 'active' : ''} onClick={() => setMenu(false)}>
               {l.label}
+              {l.page === 'activity' && unread > 0 && <span className="count" aria-label={`${unread} unread`}>{unread}</span>}
             </a>
           ))}
         </nav>

@@ -7,6 +7,8 @@ const PREFIX = 'collabspace:'
 const listeners = new Set()
 const cache = {}
 const status = { error: '' }
+const flag = (msg) => { status.error = msg; queueMicrotask(emit) }
+export const clearStorageError = () => { status.error = ''; emit() }
 
 const clone = (x) => JSON.parse(JSON.stringify(x))
 const emit = () => listeners.forEach((fn) => fn())
@@ -16,8 +18,20 @@ function persist(name, value) {
   try {
     localStorage.setItem(PREFIX + name, JSON.stringify(value))
   } catch {
-    status.error = 'Browser storage is unavailable, so changes will be lost when you close this tab.'
+    flag('Browser storage is unavailable, so changes will be lost when you close this tab.')
   }
+}
+
+// Valid JSON can still be the wrong shape (for example null). Check before trusting it.
+function shapeOk(name, value) {
+  const expected = seed[name]
+  if (name === 'session') return !!value && typeof value.userId === 'string'
+  if (Array.isArray(expected) || expected === undefined) {
+    if (!Array.isArray(value)) return false
+    if ((name === 'profiles' || name === 'communities') && value.length === 0) return false
+    return value.every((r) => r && typeof r === 'object' && typeof r.id === 'string')
+  }
+  return true
 }
 
 function load(name) {
@@ -26,7 +40,11 @@ function load(name) {
     const raw = localStorage.getItem(PREFIX + name)
     if (raw !== null) value = JSON.parse(raw)
   } catch {
-    status.error = `Saved "${name}" data was damaged, so the demo data was restored.`
+    flag(`Saved "${name}" data was damaged, so the demo data was restored.`)
+  }
+  if (value !== undefined && !shapeOk(name, value)) {
+    flag(`Saved "${name}" data was damaged, so the demo data was restored.`)
+    value = undefined
   }
   if (value === undefined) {
     value = clone(seed[name] ?? [])
